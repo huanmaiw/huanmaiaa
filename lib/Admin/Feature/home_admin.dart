@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
 class AdminMain extends StatefulWidget {
   const AdminMain({super.key});
 
@@ -10,12 +11,14 @@ class AdminMain extends StatefulWidget {
 class _AdminMainState extends State<AdminMain> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
-  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _noteController = TextEditingController();
   String? _selectedAccountId;
+  String _selectedCategory = 'Hot';
+  final List<String> _categories = ['Hot','Random','Reg'];
 
   final CollectionReference accountsCollection =
-  FirebaseFirestore.instance.collection('accounts');
+  FirebaseFirestore.instance.collection('user');
 
   @override
   Widget build(BuildContext context) {
@@ -36,58 +39,90 @@ class _AdminMainState extends State<AdminMain> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
                 }
-
                 final accounts = snapshot.data!.docs;
-
-                return ListView.builder(
-                  itemCount: accounts.length,
-                  itemBuilder: (context, index) {
-                    var account = accounts[index];
-                    return ListTile(
-                      title: Text(account['username']),
-                      subtitle: Text(account['email']),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.edit),
-                            onPressed: () {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columns: [
+                      DataColumn(label: Text('Tài Khoản')),
+                      DataColumn(label: Text('Mật khẩu')),
+                      DataColumn(label: Text('Ghi chú')),
+                      DataColumn(label: Text('Phân loại')),
+                    ],
+                    rows: accounts.map((account) {
+                      final data = account.data() as Map<String, dynamic>?;
+                      final isSelected = _selectedAccountId == account.id;
+                      return DataRow(
+                        selected: isSelected,
+                        onSelectChanged: (selected) {
+                          if (selected == true) {
+                            setState(() {
                               _selectedAccountId = account.id;
-                              _usernameController.text = account['username'];
-                              _emailController.text = account['email'];
-                              _passwordController.text = account['password'];
-                              showDialog(
-                                context: context,
-                                builder: (context) => _buildDialog(context, true),
-                              );
-                            },
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.delete, color: Colors.red),
-                            onPressed: () {
-                              _deleteAccount(account.id);
-                            },
-                          ),
+                              _usernameController.text = data?['Tai khoan'] ?? '';
+                              _passwordController.text = data?['Mat khau'] ?? '';
+                              _noteController.text = data?['Ghi chu'] ?? '';
+                              _selectedCategory = data?['Phan loai'] ?? '';
+                            });
+                          }
+                        },
+                        cells: [
+                          DataCell(Text(data?['Tai khoan'] ?? 'Không có tài khoản')),
+                          DataCell(Text(data?['Mat khau'] ?? '******')),
+                          DataCell(Text(data?['Ghi chu'] ?? 'Không có ghi chú')),
+                          DataCell(Text(data?['Phan loai'] ?? 'Không có phân loại')),
                         ],
-                      ),
-                    );
-                  },
+                      );
+                    }).toList(),
+                  ),
                 );
               },
             ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              _selectedAccountId = null;
-              _usernameController.clear();
-              _emailController.clear();
-              _passwordController.clear();
-              showDialog(
-                context: context,
-                builder: (context) => _buildDialog(context, false),
-              );
-            },
-            child: Text('Thêm Tài Khoản'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  _selectedAccountId = null;
+                  _usernameController.clear();
+                  _passwordController.clear();
+                  _noteController.clear();
+                  _selectedCategory = 'Hot';
+                  showDialog(
+                    context: context,
+                    builder: (context) => _buildDialog(context, false),
+                  );
+                },
+                child: Text('Thêm Tài Khoản'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (_selectedAccountId != null) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => _buildDialog(context, true),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Vui lòng chọn tài khoản để sửa')),
+                    );
+                  }
+                },
+                child: Text('Sửa Tài Khoản'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (_selectedAccountId != null) {
+                    _confirmDeleteAccount(_selectedAccountId!);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Vui lòng chọn tài khoản để xóa')),
+                    );
+                  }
+                },
+                child: Text('Xóa Tài Khoản'),
+              ),
+            ],
           ),
         ],
       ),
@@ -106,33 +141,30 @@ class _AdminMainState extends State<AdminMain> {
               Text(isEditing ? 'Sửa Tài Khoản' : 'Thêm Tài Khoản'),
               TextFormField(
                 controller: _usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Tên Người Chơi',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) =>
-                value == null || value.isEmpty ? 'Vui lòng nhập tên' : null,
+                decoration: InputDecoration(labelText: 'Tài khoản'),
               ),
-              SizedBox(height: 10),
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) =>
-                value == null || value.isEmpty ? 'Vui lòng nhập email' : null,
-              ),
-              SizedBox(height: 10),
               TextFormField(
                 controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Mật Khẩu',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) =>
-                value == null || value.isEmpty ? 'Vui lòng nhập mật khẩu' : null,
+                decoration: InputDecoration(labelText: 'Mật khẩu'),
+              ),
+              TextFormField(
+                controller: _noteController,
+                decoration: InputDecoration(labelText: 'Ghi chú'),
+              ),
+              DropdownButtonFormField(
+                value: _selectedCategory,
+                items: _categories.map((category) {
+                  return DropdownMenuItem(
+                    value: category,
+                    child: Text(category),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedCategory = value.toString();
+                  });
+                },
+                decoration: InputDecoration(labelText: 'Phân loại'),
               ),
               SizedBox(height: 10),
               ElevatedButton(
@@ -154,24 +186,47 @@ class _AdminMainState extends State<AdminMain> {
       ),
     );
   }
+
   void _addAccount() async {
     await accountsCollection.add({
-      'username': _usernameController.text,
-      'email': _emailController.text,
-      'password': _passwordController.text,
+      'Tai khoan': _usernameController.text,
+      'Mat khau': _passwordController.text,
+      'Ghi chu': _noteController.text,
+      'Phan loai': _selectedCategory,
     });
   }
+
   void _updateAccount() async {
     if (_selectedAccountId != null) {
       await accountsCollection.doc(_selectedAccountId).update({
-        'username': _usernameController.text,
-        'email': _emailController.text,
-        'password': _passwordController.text,
+        'Tai khoan': _usernameController.text,
+        'Mat khau': _passwordController.text,
+        'Ghi chu': _noteController.text,
+        'Phan loai': _selectedCategory,
       });
     }
   }
 
-  void _deleteAccount(String accountId) async {
-    await accountsCollection.doc(accountId).delete();
+  void _confirmDeleteAccount(String accountId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Xác nhận'),
+        content: Text('Bạn có chắc chắn muốn xóa tài khoản này không?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () {
+              accountsCollection.doc(accountId).delete();
+              Navigator.of(context).pop();
+            },
+            child: Text('Xóa', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 }

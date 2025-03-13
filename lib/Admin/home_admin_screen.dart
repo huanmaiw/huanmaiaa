@@ -16,7 +16,6 @@ class _AdminAppState extends State<AdminApp> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -50,16 +49,9 @@ class _AdminAppState extends State<AdminApp> {
         ],
       ),
       body: [
-        // Trang Chủ
         AdminMain(),
-
-        // Lịch Sử
         HistoryMain(),
-
-        // Tin Nhắn
         BankMain(),
-
-        // Tài Khoản
         ProfileAdmin(),
       ][currentPageIndex],
     );

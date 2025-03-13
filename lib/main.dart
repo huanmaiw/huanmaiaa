@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'Admin/home_admin_screen.dart';
 import 'User/Accountz/login_user.dart';
 import 'User/Featuree/Cart/cart_provider.dart';
 import 'User/Featuree/Favorite/favorite_pro.dart';
@@ -30,8 +31,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home:
-      LoginScreen(),
+      home:AdminApp(),
+     // LoginScreen(),
     );
   }
 // Widget _getHomeScreen() {
