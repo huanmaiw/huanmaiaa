@@ -7,6 +7,7 @@ import 'User/Featuree/Cart/cart_provider.dart';
 import 'User/Featuree/Favorite/favorite_pro.dart';
 import 'User/Featuree/Provider/balence.dart';
 import 'User/Featuree/Provider/top_up.dart';
+import 'drawers.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -31,7 +32,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home:AdminApp(),
+      home:Drawers(),
      // LoginScreen(),
     );
   }

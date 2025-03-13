@@ -36,7 +36,7 @@ class _DrawersState extends State<Drawers> {
     try {
       await FirebaseAuth.instance.signOut();
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const Drawers()), // Thay thế LoginScreen() bằng màn hình đăng nhập của bạn
+        MaterialPageRoute(builder: (context) => const Drawers()),
             (Route<dynamic> route) => false,
       );
     } catch (e) {
@@ -55,14 +55,14 @@ class _DrawersState extends State<Drawers> {
             TextButton(
               child: const Text('Không'),
               onPressed: () {
-                Navigator.of(context).pop(); // Đóng hộp thoại
+                Navigator.of(context).pop();
               },
             ),
             TextButton(
               child: const Text('Có'),
               onPressed: () {
-                Navigator.of(context).pop(); // Đóng hộp thoại
-                _signOut(context); // Gọi hàm đăng xuất
+                Navigator.of(context).pop();
+                _signOut(context);
               },
             ),
           ],
@@ -70,170 +70,132 @@ class _DrawersState extends State<Drawers> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:const Text('Welcome to Mai Shop'),
+        title: const Text('Shop HuanMai', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold,color: Colors.white)),
+        backgroundColor: Colors.blueAccent,
+        elevation: 5,
       ),
       drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
+        child: Column(
           children: [
             Container(
               height: 200,
+              width: double.infinity,
               decoration: const BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Mai',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text(
-                          'ID: 4826', // Replace with your ID
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Consumer<BalanceProvider>(
-                          builder: (context, balanceProvider, child) {
-                            return Text(
-                              'Số tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: 'VND', decimalDigits: 0).format(balanceProvider.balance)}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    CircleAvatar(
-                      radius: 70,
-                      //backgroundColor: Colors.blue,
-                      child: AccountPage(),
-                    ),
-                  ],
+                gradient: LinearGradient(
+                  colors: [Colors.blueAccent, Colors.lightBlue],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                borderRadius: BorderRadius.only(bottomRight: Radius.circular(20), bottomLeft: Radius.circular(20)),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Stack(
+                    alignment: Alignment.center,
+                    children:[
+              CircleAvatar(
+                radius: 45,
+                backgroundImage: AssetImage('images/category/fr0.jpg'),
+              ),
+                      Positioned(
+                        bottom: -15,
+                        right: -5,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.blue,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                            onPressed: () {
+                              AccountPage();
+                            },
+                          ),
+                        ),
+                      ),
+              ] ,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Mai Shop',
+                    style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                  Consumer<BalanceProvider>(
+                    builder: (context, balanceProvider, child) {
+                      return Text(
+                        'Số tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: 'VND', decimalDigits: 0).format(balanceProvider.balance)}',
+                        style: const TextStyle(color: Colors.white, fontSize: 16),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
+
             const Divider(),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Trang chủ'),
-              onTap: () {
-                setState(() {
-                  currentIndex = 0;
-                });
-                Navigator.pop(context); // Close the drawer
-              },
-              selected: currentIndex == 0,
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _buildDrawerItem(Icons.home, 'Trang chủ', 0),
+                  _buildDrawerItem(Icons.favorite_border, 'Yêu thích', 1),
+                  _buildDrawerItem(Icons.attach_money, 'Nạp tiền', 2),
+                  _buildDrawerItem(Icons.shopping_bag, 'Lịch sử mua hàng', 3),
+                  _buildDrawerItem(Icons.history, 'Lịch sử nạp tiền', 4),
+                  _buildDrawerItem(Icons.call, 'CSKH 24/7', 5),
+                  _buildDrawerItem(Icons.checklist, 'Chính sách & Điều khoản', 6),
+                  _buildDrawerItem(Icons.password, 'Đổi mật khẩu', 7),
+                ],
+              ),
             ),
-            ListTile(
-              leading: const Icon(Icons.favorite_border),
-              title: const Text('Yêu thích'),
-              onTap: () {
-                setState(() {
-                  currentIndex = 1;
-                });
-                Navigator.pop(context); // Close the drawer
-              },
-              selected: currentIndex == 1,
-            ),
-            ListTile(
-              leading: const Icon(Icons.attach_money),
-              title: const Text('Nạp tiền'),
-              onTap: () {
-                setState(() {
-                  currentIndex = 2;
-                });
-                Navigator.pop(context); // Close the drawer
-              },
-              selected: currentIndex == 2,
-            ),
-            ListTile(
-              leading: const Icon(Icons.shopping_bag),
-              title: const Text('Lịch sử mua hàng'),
-              onTap: () {
-                setState(() {
-                  currentIndex = 3;
-                });
-                Navigator.pop(context); // Close the drawer
-              },
-              selected: currentIndex == 3,
-            ),
-            ListTile(
-              leading: const Icon(Icons.history),
-              title: const Text('Lịch sử nạp tiền'),
-              onTap: () {
-                setState(() {
-                  currentIndex = 4;
-                });
-                Navigator.pop(context); // Close the drawer
-              },
-              selected: currentIndex == 4,
-            ),
-            ListTile(
-              leading: const Icon(Icons.call),
-              title: const Text('CSKH 24/7'),
-              onTap: () {
-                setState(() {
-                  currentIndex = 5;
-                });
-                Navigator.pop(context); // Close the drawer
-              },
-              selected: currentIndex == 5,
-            ),
-            ListTile(
-              leading: const Icon(Icons.checklist),
-              title: const Text('Chính sách và điều khoản'),
-              onTap: () {
-                setState(() {
-                  currentIndex = 6;
-                });
-                Navigator.pop(context); // Close the drawer
-              },
-              selected: currentIndex == 6,
-            ),
-            ListTile(
-              leading: const Icon(Icons.password),
-              title: const Text('Đổi mật khẩu'),
-              onTap: () {
-                setState(() {
-                  currentIndex = 7;
-                });
-                Navigator.pop(context); // Close the drawer
-              },
-              selected: currentIndex == 7,
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Đăng xuất'),
-              onTap: () {
-                _showLogoutConfirmationDialog(context); // Hiển thị hộp thoại xác nhận
-              },
-              selected: currentIndex == 8,
+            Container(
+              margin: const EdgeInsets.all(10),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                icon: const Icon(Icons.logout,color: Colors.white,),
+                label: const Text('Đăng xuất'),
+                onPressed: () => _showLogoutConfirmationDialog(context),
+              ),
             ),
           ],
         ),
       ),
-      body: screens[currentIndex],
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: screens[currentIndex],
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem(IconData icon, String title, int index) {
+    return ListTile(
+      leading: Icon(icon, color: currentIndex == index ? Colors.blueAccent : Colors.black54),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: currentIndex == index ? Colors.blueAccent : Colors.black87,
+        ),
+      ),
+      selected: currentIndex == index,
+      //selectedTileColor: Colors.grey.shade100,
+      onTap: () {
+        setState(() {
+          currentIndex = index;
+        });
+        Navigator.pop(context);
+      },
     );
   }
 }
