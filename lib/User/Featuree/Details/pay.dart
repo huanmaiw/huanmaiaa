@@ -1,6 +1,10 @@
+import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../Fuature_user/history_buy.dart';
 import '../Product/product_models.dart';
 import '../Provider/balence.dart';
 import 'order.dart';
@@ -21,13 +25,13 @@ class PaymentScreen extends StatefulWidget {
 class _PaymentScreenState extends State<PaymentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _discountCodeController = TextEditingController();
-  double _discountAmount = 0; // Số tiền giảm giá
-  double _finalPrice = 0; // Tổng tiền sau khi giảm giá
+  double _discountAmount = 0;
+  double _finalPrice = 0;
 
   @override
   void initState() {
     super.initState();
-    _finalPrice = widget.totalPrice; // Khởi tạo tổng tiền sau khi giảm giá bằng tổng tiền ban đầu
+    _finalPrice = widget.totalPrice;
   }
 
   @override
@@ -39,11 +43,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void _applyDiscountCode() {
     if (_formKey.currentState!.validate()) {
       String discountCode = _discountCodeController.text;
-      // Kiểm tra mã giảm giá (trong trường hợp này, giảm 10% cho tất cả mã)
-      if (discountCode.isNotEmpty) {
+
+      if (discountCode=="shopmeo" || discountCode=="SHOPMEO") {
         setState(() {
-          _discountAmount = widget.totalPrice * 0.1; // Giảm 10%
-          _finalPrice = widget.totalPrice - _discountAmount; // Tính lại tổng tiền
+          _discountAmount = widget.totalPrice * 0.1;
+          _finalPrice = widget.totalPrice - _discountAmount;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Đã áp dụng giảm giá 10%')),
@@ -60,28 +64,77 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-  void _handlePayment() {
-    // Lấy BalanceProvider từ context
+  void _handlePayment() async {
     final balanceProvider = Provider.of<BalanceProvider>(context, listen: false);
+    await balanceProvider.fetchBalance();
 
-    // Kiểm tra số dư
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Bạn chưa đăng nhập!")),
+      );
+      return;
+    }
+
+    String userId = user.uid;
+
     if (balanceProvider.balance >= _finalPrice) {
-      // Trừ tiền
       balanceProvider.deductBalance(_finalPrice);
 
-      // Thông báo thành công
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'balance': balanceProvider.balance,
+      });
+
+      // Lấy danh sách tài khoản từ Firestore
+      QuerySnapshot accountSnapshot = await FirebaseFirestore.instance.collection('user').get();
+      if (accountSnapshot.docs.isEmpty) {
+        print("❌ Không có tài khoản nào trong Firestore!");
+        return;
+      }
+
+      // Chọn ngẫu nhiên một tài khoản từ Firestore
+      Random random = Random();
+      var selectedAccount = accountSnapshot.docs[random.nextInt(accountSnapshot.docs.length)];
+
+      // Lưu vào lịch sử mua hàng của user
+      await FirebaseFirestore.instance.collection('users').doc(userId).collection('history').add({
+        'username': selectedAccount['Tai khoan'],
+        'password': selectedAccount['Mat khau'],
+        'note': selectedAccount['Ghi chu'],
+        'price': _finalPrice,
+        'purchaseDate': Timestamp.now(),
+      }).then((_) {
+        print("✅ Lưu lịch sử mua thành công!");
+      }).catchError((error) {
+        print("❌ Lỗi lưu lịch sử mua: $error");
+      });
+
+      // Lưu vào lịch sử bán của admin
+      await FirebaseFirestore.instance.collection('admin').doc('history').collection('transactions').add({
+        'buyerId': userId,
+        'username': selectedAccount['Tai khoan'],
+        'password': selectedAccount['Mat khau'],
+        'note': selectedAccount['Ghi chu'],
+        'price': _finalPrice,
+        'saleDate': Timestamp.now(),
+      }).then((_) {
+        print("✅ Lưu lịch sử bán thành công!");
+      }).catchError((error) {
+        print("❌ Lỗi lưu lịch sử bán: $error");
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Thanh toán thành công')),
+        const SnackBar(content: Text('Thanh toán thành công! Tài khoản đã được thêm vào lịch sử mua hàng.')),
       );
 
+      // Chuyển hướng đến lịch sử mua hàng
       Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const OrderSuccessScreen()));
+        context,
+        MaterialPageRoute(builder: (context) => const PurchaseHistoryScreen()),
+      );
     } else {
-      // Thông báo thất bại
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Số dư không đủ')),
+        const SnackBar(content: Text('Số dư không đủ!')),
       );
     }
   }
@@ -181,8 +234,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 const SizedBox(height: 30),
                 // Nút thanh toán
                 Center(
-                  child: ElevatedButton(
-                    onPressed: _handlePayment,
+                  child: ElevatedButton(style: ElevatedButton.styleFrom(foregroundColor: Colors.white,backgroundColor: Colors.red),
+                    onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_)=>OrderSuccessScreen()));
+                      if (widget.products.isNotEmpty) {
+                       // var product = widget.products.first;
+                        _handlePayment();
+                      }
+                    },
+
                     child: const Text('Thanh toán'),
                   ),
                 ),

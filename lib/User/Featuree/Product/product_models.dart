@@ -204,7 +204,7 @@ final List<Product> pick = [
     description:
     "Reg Vio Dj Cau Hon\nTướng :14\nTrang phục :6\nTrắng thông tin",
     image:[
-      "images/Reg/reg5.jpeg",
+      "images/Reg/reg5.png",
     ],
     price: 180000,
     category: "Liên Quân Mobile",

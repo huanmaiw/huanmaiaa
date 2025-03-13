@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class BankMain extends StatefulWidget {
   const BankMain({super.key});
 
@@ -7,42 +9,6 @@ class BankMain extends StatefulWidget {
 }
 
 class _BankMainState extends State<BankMain> {
-  final List<CardRecharge>  _cardRecharges = [
-    CardRecharge(
-        id: '1',
-        telcoProvider: 'Viettel',
-        amount: 100000,
-        status: 'Thành Công',
-        date: DateTime.now()
-    ),
-    CardRecharge(
-        id: '2',
-        telcoProvider: 'Mobifone',
-        amount: 50000,
-        status: 'Thành Công',
-        date: DateTime.now().subtract(Duration(days: 1))
-    ),
-  ];
-
-  final List<MoneyTransfer> _moneyTransfers = [
-    MoneyTransfer(
-        id: '1',
-        recipientName: 'Nguyễn Văn A',
-        bankName: 'Vietcombank',
-        amount: 500000,
-        status: 'Thành Công',
-        date: DateTime.now()
-    ),
-    MoneyTransfer(
-        id: '2',
-        recipientName: 'Trần Thị B',
-        bankName: 'BIDV',
-        amount: 300000,
-        status: 'Thành Công',
-        date: DateTime.now().subtract(Duration(days: 2))
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -50,8 +16,8 @@ class _BankMainState extends State<BankMain> {
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          title: Text('Quản Lý Ngân Hàng'),
-          bottom: TabBar(
+          title: const Text('Quản Lý Ngân Hàng'),
+          bottom: const TabBar(
             tabs: [
               Tab(text: 'Nạp Thẻ'),
               Tab(text: 'Chuyển Khoản'),
@@ -61,126 +27,51 @@ class _BankMainState extends State<BankMain> {
         body: TabBarView(
           children: [
             // Trang Nạp Thẻ
-            Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _cardRecharges.length,
-                    itemBuilder: (context, index) {
-                      final recharge = _cardRecharges[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.green.shade100,
-                          child: Icon(Icons.phone_android, color: Colors.green),
-                        ),
-                        title: Text(recharge.telcoProvider),
-                        subtitle: Text('${recharge.amount.toString()} VND'),
-                        trailing: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              recharge.status,
-                              style: TextStyle(
-                                color: recharge.status == 'Thành Công'
-                                    ? Colors.green
-                                    : Colors.red,
-                              ),
+            StreamBuilder(
+              stream: FirebaseFirestore.instance.collection('top_up_history').orderBy('date', descending: true).snapshots(),
+              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text("Chưa có giao dịch nào"));
+                }
+                return ListView(
+                  children: snapshot.data!.docs.map((doc) {
+                    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.green.shade100,
+                        child: const Icon(Icons.phone_android, color: Colors.green),
+                      ),
+                      title: Text('${data['telcoProvider']} - ${data['amount']} VND'),
+                      subtitle: Text('Serial: ${data['serial']} - Mã: ${data['code']}'),
+                      trailing: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            data['status'],
+                            style: TextStyle(
+                              color: data['status'] == 'Thành công' ? Colors.green : Colors.red,
                             ),
-                            Text(
-                              '${recharge.date.day}/${recharge.date.month}/${recharge.date.year}',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+                          ),
+                          Text(
+                            '${(data['date'] as Timestamp).toDate()}',
+                            style: const TextStyle(color: Colors.grey, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
             ),
-            Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _moneyTransfers.length,
-                    itemBuilder: (context, index) {
-                      final transfer = _moneyTransfers[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.blue.shade100,
-                          child: Icon(Icons.account_balance, color: Colors.blue),
-                        ),
-                        title: Text(transfer.recipientName),
-                        subtitle: Text(transfer.bankName),
-                        trailing: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              '${transfer.amount.toString()} VND',
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              transfer.status,
-                              style: TextStyle(
-                                color: transfer.status == 'Thành Công'
-                                    ? Colors.green
-                                    : Colors.red,
-                              ),
-                            ),
-                            Text(
-                              '${transfer.date.day}/${transfer.date.month}/${transfer.date.year}',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+            // Trang Chuyển Khoản (Chưa làm)
+            const Center(child: Text("Chuyển khoản đang cập nhật...")),
           ],
         ),
       ),
     );
   }
-}
-
-class CardRecharge {
-  final String id;
-  final String telcoProvider;
-  final int amount;
-  final String status;
-  final DateTime date;
-
-  CardRecharge({
-    required this.id,
-    required this.telcoProvider,
-    required this.amount,
-    required this.status,
-    required this.date,
-  });
-}
-
-class MoneyTransfer {
-  final String id;
-  final String recipientName;
-  final String bankName;
-  final int amount;
-  final String status;
-  final DateTime date;
-
-  MoneyTransfer({
-    required this.id,
-    required this.recipientName,
-    required this.bankName,
-    required this.amount,
-    required this.status,
-    required this.date,
-  });
 }

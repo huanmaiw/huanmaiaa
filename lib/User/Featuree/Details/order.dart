@@ -9,8 +9,7 @@ class OrderSuccessScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Thanh toán thành công'),
-        automaticallyImplyLeading: false, // Ẩn nút back
+        automaticallyImplyLeading: false,
       ),
       body: Center(
         child: Column(
@@ -28,7 +27,9 @@ class OrderSuccessScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
+            ElevatedButton(style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white),
               onPressed: () {
                 Navigator.pushAndRemoveUntil(
                   context,

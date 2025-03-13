@@ -10,33 +10,7 @@ class HistoryMain extends StatefulWidget {
 
 class _HistoryMainState extends State<HistoryMain> {
   final List<GameAccountPurchase> _purchaseHistory = [
-    GameAccountPurchase(
-      id: '1',
-      gameName: 'Liên Quân Mobile',
-      accountUsername: 'Player123',
-      rank: 'Kim Cương',
-      price: 500000,
-      purchaseDate: DateTime(2024, 3, 15, 14, 30),
-      buyerName: 'Nguyễn Văn A',
-    ),
-    GameAccountPurchase(
-      id: '2',
-      gameName: 'Free Fire',
-      accountUsername: 'Shooter456',
-      rank: 'Bạc',
-      price: 200000,
-      purchaseDate: DateTime(2024, 3, 10, 10, 15),
-      buyerName: 'Trần Thị B',
-    ),
-    GameAccountPurchase(
-      id: '3',
-      gameName: 'PUBG Mobile',
-      accountUsername: 'Sniper789',
-      rank: 'Vàng',
-      price: 350000,
-      purchaseDate: DateTime(2024, 3, 5, 16, 45),
-      buyerName: 'Lê Văn C',
-    ),
+
   ];
   void _showPurchaseDetailsDialog(GameAccountPurchase purchase) {
     showDialog(
@@ -49,12 +23,10 @@ class _HistoryMainState extends State<HistoryMain> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildDetailRow('Mã Giao Dịch:', purchase.id),
-              _buildDetailRow('Tên Game:', purchase.gameName),
               _buildDetailRow('Tài Khoản:', purchase.accountUsername),
-              _buildDetailRow('Rank:', purchase.rank),
               _buildDetailRow('Giá Bán:', '${purchase.price.toString()} VND'),
+              _buildDetailRow('Phân Loại:', purchase.buyerName),
               _buildDetailRow('Ngày Mua:', DateFormat('dd/MM/yyyy HH:mm').format(purchase.purchaseDate)),
-              _buildDetailRow('Người Mua:', purchase.buyerName),
             ],
           ),
           actions: [
@@ -68,7 +40,6 @@ class _HistoryMainState extends State<HistoryMain> {
     );
   }
 
-  // Hàm tạo hàng thông tin chi tiết
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -222,7 +193,6 @@ class _HistoryMainState extends State<HistoryMain> {
   }
 }
 
-// Lớp lưu thông tin mua nick game
 class GameAccountPurchase {
   final String id;
   final String gameName;

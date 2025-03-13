@@ -1,32 +1,18 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../Provider/balence.dart';
 import '../Provider/top_up.dart';
-
 class Napcard extends StatefulWidget {
   const Napcard({Key? key}) : super(key: key);
-
   @override
   State<Napcard> createState() => _NapcardState();
 }
-
 class _NapcardState extends State<Napcard> {
   String? selectedValue;
   String? selectedValue1;
-  List<String> items = [
-    'Viettel',
-    'Vinaphone',
-    'Mobifone',
-    'Vietnamoblie'
-  ];
-  List<String> itemss = [
-    '10.000',
-    '20.000',
-    '50.000',
-    '100.000',
-    '200.000',
-    '500.000'
-  ];
+  List<String> items = ['Viettel', 'Vinaphone', 'Mobifone', 'Vietnamobile'];
+  List<String> itemss = ['10.000', '20.000', '50.000', '100.000', '200.000', '500.000'];
   final _serialController = TextEditingController();
   final _codeController = TextEditingController();
 
@@ -37,41 +23,48 @@ class _NapcardState extends State<Napcard> {
     super.dispose();
   }
 
-  void _handleTopUp(BuildContext context) {
-    // Lấy BalanceProvider và TopUpHistoryProvider từ context
+  void _handleTopUp(BuildContext context) async {
     final balanceProvider = Provider.of<BalanceProvider>(context, listen: false);
     final topUpHistoryProvider = Provider.of<TopUpHistoryProvider>(context, listen: false);
 
-    // Lấy mệnh giá thẻ từ selectedValue1
     String selectedAmount = selectedValue1 ?? '';
-    double topUpAmount = 0;
+    double topUpAmount = double.tryParse(selectedAmount.replaceAll('.', '')) ?? 0;
 
-    // Chuyển đổi mệnh giá thẻ thành số tiền
-    if (selectedAmount.isNotEmpty) {
-      topUpAmount = double.tryParse(selectedAmount.replaceAll('.', '')) ?? 0;
-    }
-
-    // Kiểm tra số tiền nạp có hợp lệ không
     if (topUpAmount > 0) {
-      // Cộng tiền vào số dư
-      balanceProvider.updateBalance(balanceProvider.balance + topUpAmount);
+      String userId = "user123";
 
-      // Thêm giao dịch vào lịch sử
+      // Lấy số dư hiện tại từ Firestore
+      DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(userId);
+      DocumentSnapshot userSnapshot = await userRef.get();
+
+      double currentBalance = userSnapshot.exists ? (userSnapshot['balance'] ?? 0).toDouble() : 0;
+      double newBalance = currentBalance + topUpAmount;
+      await userRef.set({'balance': newBalance}, SetOptions(merge: true));
+      balanceProvider.updateBalance(newBalance);
+      await FirebaseFirestore.instance.collection('top_up_history').add({
+        'userId': 'user123',
+        'amount': topUpAmount,
+        'telcoProvider': selectedValue,
+        'serial': _serialController.text,
+        'code': _codeController.text,
+        'status': 'Thành công',
+        'date': Timestamp.now(),
+      });
+
+      // Cập nhật lịch sử trong ứng dụng
       topUpHistoryProvider.addTransaction(
         TopUpTransaction(
           dateTime: DateTime.now(),
           amount: topUpAmount,
-          cardType: selectedValue ?? '', // Truyền loại thẻ vào
+          cardType: selectedValue ?? '',
           status: 'Thành công',
         ),
       );
 
-      // Thông báo thành công
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nạp tiền thành công')),
       );
     } else {
-      // Thông báo thất bại
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng chọn mệnh giá thẻ')),
       );
@@ -83,17 +76,13 @@ class _NapcardState extends State<Napcard> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text(''),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(10.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Loại thẻ ", style: TextStyle(fontSize: 18)),
-                const SizedBox(height: 8.0),
                 DropdownButton<String>(
                   value: selectedValue,
                   hint: const Text('-Chọn loại thẻ-'),
@@ -109,9 +98,6 @@ class _NapcardState extends State<Napcard> {
                     });
                   },
                 ),
-                const SizedBox(height: 16.0),
-                const Text("Mệnh giá: ", style: TextStyle(fontSize: 18)),
-                const SizedBox(height: 8.0),
                 DropdownButton<String>(
                   value: selectedValue1,
                   hint: const Text('-Chọn mệnh giá-'),
@@ -127,58 +113,26 @@ class _NapcardState extends State<Napcard> {
                     });
                   },
                 ),
-                const SizedBox(height: 16.0),
-                const Text("Serial: ", style: TextStyle(fontSize: 18)),
-                const SizedBox(height: 8.0),
                 TextFormField(
                   controller: _serialController,
-                  decoration: const InputDecoration(
-                    hintText: "Nhập seriel thẻ",
+                  decoration:  InputDecoration(
+                      hintText: "Nhập serial thẻ",
+                    border: OutlineInputBorder(),
                   ),
                 ),
-                const SizedBox(height: 16.0),
-                const Text("Mã thẻ: ", style: TextStyle(fontSize: 18)),
-                const SizedBox(height: 8.0),
+                SizedBox(height: 5,),
                 TextFormField(
                   controller: _codeController,
-                  decoration: const InputDecoration(
-                    hintText: "Nhập mã thẻ",
+                  decoration:  InputDecoration(hintText: "Nhập mã thẻ",
+                  border: OutlineInputBorder(),
                   ),
                 ),
-                const SizedBox(height: 15,),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title:const Text("Thông báo"),
-                            content: const Text("Đang chờ xử lý..."),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  _handleTopUp(context);
-                                },
-                                child: const Text("Đóng"),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue, // Background color
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0), // Border radius
-                      ),
-                    ),
-                    child: const Text("Nạp thẻ",style: TextStyle(color: Colors.white),),
-                  ),
+                SizedBox(height: 10,),
+                ElevatedButton(style: ElevatedButton.styleFrom(foregroundColor: Colors.white,backgroundColor: Colors.blue),
+                  onPressed: () => _handleTopUp(context),
+                  child: const Text("Nạp thẻ"),
                 ),
-                const Text('Nạp qua ngân hàng'),
-                Image.asset("images/tech.jpg", height: 500, width: 500,),
+                Image.asset("images/tech.jpg"),
               ],
             ),
           ),

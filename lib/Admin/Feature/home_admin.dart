@@ -1,13 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
 class AdminMain extends StatefulWidget {
   const AdminMain({super.key});
-
   @override
   State<AdminMain> createState() => _AdminMainState();
 }
-
 class _AdminMainState extends State<AdminMain> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
@@ -25,7 +22,7 @@ class _AdminMainState extends State<AdminMain> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text('Quản Lý Tài Khoản Game'),
+        title: Text('Quản Lý Tài Khoản'),
       ),
       body: Column(
         children: [
@@ -81,7 +78,7 @@ class _AdminMainState extends State<AdminMain> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              ElevatedButton(
+              ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
                 onPressed: () {
                   _selectedAccountId = null;
                   _usernameController.clear();
@@ -95,7 +92,7 @@ class _AdminMainState extends State<AdminMain> {
                 },
                 child: Text('Thêm Tài Khoản'),
               ),
-              ElevatedButton(
+              ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.purpleAccent, foregroundColor: Colors.white),
                 onPressed: () {
                   if (_selectedAccountId != null) {
                     showDialog(
@@ -110,7 +107,7 @@ class _AdminMainState extends State<AdminMain> {
                 },
                 child: Text('Sửa Tài Khoản'),
               ),
-              ElevatedButton(
+              ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
                 onPressed: () {
                   if (_selectedAccountId != null) {
                     _confirmDeleteAccount(_selectedAccountId!);
