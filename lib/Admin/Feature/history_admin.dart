@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -9,23 +10,102 @@ class HistoryMain extends StatefulWidget {
 }
 
 class _HistoryMainState extends State<HistoryMain> {
-  final List<GameAccountPurchase> _purchaseHistory = [
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Text('Lịch Sử Bán Tài Khoản'),
+      ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('user').snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Lỗi: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(child: Text('Chưa có giao dịch nào'));
+          }
 
-  ];
+          // Lấy danh sách tài khoản từ Firebase
+          var purchaseHistory = snapshot.data!.docs.map((doc) {
+            var data = doc.data() as Map<String, dynamic>;
+            return GameAccountPurchase(
+              id: doc.id,
+              gameName: data['Phan loai'] ?? 'Không xác định',
+              accountUsername: data['Tai khoan'] ?? 'Không có',
+              rank: 'Không có',
+              purchaseDate: DateTime.now(), // Nếu có thời gian thì cập nhật từ Firestore
+              buyerName: data['Ghi chu'] ?? 'Không có',
+            );
+          }).toList();
+
+          return ListView.builder(
+            itemCount: purchaseHistory.length,
+            itemBuilder: (context, index) {
+              final purchase = purchaseHistory[index];
+              return Card(
+                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                elevation: 4,
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: _getGameColor(purchase.gameName),
+                    child: Text(
+                      purchase.gameName[0],
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  title: Text(
+                    purchase.gameName,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Tài khoản: ${purchase.accountUsername}'),
+                      Text('Mật khẩu: ******'),
+                      Text(
+                        DateFormat('dd/MM/yyyy HH:mm').format(purchase.purchaseDate),
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        purchase.buyerName,
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                  onTap: () => _showPurchaseDetailsDialog(purchase),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
   void _showPurchaseDetailsDialog(GameAccountPurchase purchase) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Chi Tiết Mua Nick'),
+          title: Text('Chi Tiết Giao Dịch'),
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildDetailRow('Mã Giao Dịch:', purchase.id),
               _buildDetailRow('Tài Khoản:', purchase.accountUsername),
-              _buildDetailRow('Giá Bán:', '${purchase.price.toString()} VND'),
-              _buildDetailRow('Phân Loại:', purchase.buyerName),
+              _buildDetailRow('Phân Loại:', purchase.gameName),
               _buildDetailRow('Ngày Mua:', DateFormat('dd/MM/yyyy HH:mm').format(purchase.purchaseDate)),
             ],
           ),
@@ -59,137 +139,15 @@ class _HistoryMainState extends State<HistoryMain> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text('Lịch Sử Mua Nick Game'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.filter_list),
-            onPressed: _showFilterDialog,
-          ),
-        ],
-      ),
-      body: ListView.builder(
-        itemCount: _purchaseHistory.length,
-        itemBuilder: (context, index) {
-          final purchase = _purchaseHistory[index];
-          return Card(
-            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            elevation: 4,
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: _getGameColor(purchase.gameName),
-                child: Text(
-                  purchase.gameName[0],
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-              title: Text(
-                purchase.gameName,
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Nick: ${purchase.accountUsername}'),
-                  Text('Rank: ${purchase.rank}'),
-                  Text(
-                    DateFormat('dd/MM/yyyy HH:mm').format(purchase.purchaseDate),
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-              trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${purchase.price.toString()} VND',
-                    style: TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    purchase.buyerName,
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-              onTap: () => _showPurchaseDetailsDialog(purchase),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  // Hàm chọn màu cho từng game
   Color _getGameColor(String gameName) {
     switch (gameName.toLowerCase()) {
-      case 'liên quân mobile':
-        return Colors.blue;
-      case 'free fire':
+      case 'hot':
         return Colors.red;
-      case 'pubg mobile':
-        return Colors.green;
+      case 'vip':
+        return Colors.blue;
       default:
-        return Colors.purple;
+        return Colors.grey;
     }
-  }
-
-  // Hàm hiển thị dialog lọc
-  void _showFilterDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Lọc Lịch Sử'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: 'Chọn Game',
-                  border: OutlineInputBorder(),
-                ),
-                items: [
-                  'Tất Cả',
-                  'Liên Quân Mobile',
-                  'Free Fire',
-                  'PUBG Mobile'
-                ].map((game) {
-                  return DropdownMenuItem(
-                    value: game,
-                    child: Text(game),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  // Xử lý lọc
-                },
-              ),
-              SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Áp dụng bộ lọc
-                        Navigator.of(context).pop();
-                      },
-                      child: Text('Áp Dụng'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 }
 
@@ -198,7 +156,6 @@ class GameAccountPurchase {
   final String gameName;
   final String accountUsername;
   final String rank;
-  final int price;
   final DateTime purchaseDate;
   final String buyerName;
 
@@ -207,7 +164,6 @@ class GameAccountPurchase {
     required this.gameName,
     required this.accountUsername,
     required this.rank,
-    required this.price,
     required this.purchaseDate,
     required this.buyerName,
   });

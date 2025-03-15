@@ -1,4 +1,4 @@
-import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +27,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final _discountCodeController = TextEditingController();
   double _discountAmount = 0;
   double _finalPrice = 0;
-
   @override
   void initState() {
     super.initState();
@@ -85,16 +84,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'balance': balanceProvider.balance,
       });
 
-      // Lấy danh sách tài khoản từ Firestore
-      QuerySnapshot accountSnapshot = await FirebaseFirestore.instance.collection('user').get();
+      // Lấy danh sách tài khoản có sẵn theo phân loại (ví dụ: "Hot")
+      QuerySnapshot accountSnapshot = await FirebaseFirestore.instance
+          .collection('user')
+          .where('Phan loai', isEqualTo: 'Hot') // Lọc theo loại tài khoản
+          .limit(1)
+          .get();
+
       if (accountSnapshot.docs.isEmpty) {
-        print("❌ Không có tài khoản nào trong Firestore!");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không còn tài khoản có sẵn!')),
+        );
         return;
       }
 
-      // Chọn ngẫu nhiên một tài khoản từ Firestore
-      Random random = Random();
-      var selectedAccount = accountSnapshot.docs[random.nextInt(accountSnapshot.docs.length)];
+      var selectedAccount = accountSnapshot.docs.first;
 
       // Lưu vào lịch sử mua hàng của user
       await FirebaseFirestore.instance.collection('users').doc(userId).collection('history').add({
@@ -103,10 +107,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'note': selectedAccount['Ghi chu'],
         'price': _finalPrice,
         'purchaseDate': Timestamp.now(),
-      }).then((_) {
-        print("✅ Lưu lịch sử mua thành công!");
-      }).catchError((error) {
-        print("❌ Lỗi lưu lịch sử mua: $error");
       });
 
       // Lưu vào lịch sử bán của admin
@@ -117,20 +117,39 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'note': selectedAccount['Ghi chu'],
         'price': _finalPrice,
         'saleDate': Timestamp.now(),
-      }).then((_) {
-        print("✅ Lưu lịch sử bán thành công!");
-      }).catchError((error) {
-        print("❌ Lỗi lưu lịch sử bán: $error");
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Thanh toán thành công! Tài khoản đã được thêm vào lịch sử mua hàng.')),
-      );
+      // Xóa tài khoản khỏi Firestore sau khi bán
+      await FirebaseFirestore.instance.collection('user').doc(selectedAccount.id).delete();
 
-      // Chuyển hướng đến lịch sử mua hàng
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const PurchaseHistoryScreen()),
+      // Hiển thị hộp thoại chứa tài khoản và mật khẩu
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Thanh toán thành công!"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("Tài khoản: ${selectedAccount['Tai khoan']}"),
+                Text("Mật khẩu: ${selectedAccount['Mat khau']}"),
+                Text("Ghi chú: ${selectedAccount['Ghi chu']}"),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => PurchaseHistoryScreen()),
+                  );
+                },
+                child: Text("OK"),
+              ),
+            ],
+          );
+        },
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -138,6 +157,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -236,6 +256,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 Center(
                   child: ElevatedButton(style: ElevatedButton.styleFrom(foregroundColor: Colors.white,backgroundColor: Colors.red),
                     onPressed: () {
+
                     Navigator.push(context, MaterialPageRoute(builder: (_)=>OrderSuccessScreen()));
                       if (widget.products.isNotEmpty) {
                        // var product = widget.products.first;
@@ -252,5 +273,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ),
       ),
     );
+
   }
 }
