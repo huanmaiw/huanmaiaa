@@ -19,10 +19,6 @@ class ItemsDetails extends StatelessWidget {
                 fontSize: 22,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(left: 170),
-              child: Image.asset("images/logo.jpg",height: 70,width: 70,),
-            ),
           ],
         ),
         Row(
@@ -42,7 +38,6 @@ class ItemsDetails extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-
               ],
             ),
           ],

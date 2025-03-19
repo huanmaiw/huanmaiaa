@@ -45,19 +45,21 @@ class _HomeScreenState extends State<HomeScreen> {
               categoryItems(),
               const SizedBox(height: 20),
               if (selectedIndex == 0)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Center(
-                      child: Text(
-                        "Tài khoản đang sale ",
-                        style: TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.w800,
+                SingleChildScrollView(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Center(
+                        child: Text(
+                          "Tài khoản đang sale ",
+                          style: TextStyle(
+                            fontSize: 25,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               const SizedBox(height: 10),
               GridView.builder(

@@ -19,7 +19,7 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
     if (user == null) {
       return Scaffold(
         appBar: AppBar(title: Text('Lịch sử mua tài khoản game')),
-        body: Center(child: Text("Bạn chưa đăng nhập!")),
+        body: Center(child: Text("Chưa có giao dịch nào!")),
       );
     }
 

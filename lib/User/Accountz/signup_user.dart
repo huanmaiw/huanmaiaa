@@ -78,9 +78,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: signup,
-                  child: _isLoading
-                      ?  CircularProgressIndicator()
-                      : const Text('Đăng ký'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,
@@ -89,6 +86,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     minimumSize: Size(double.infinity, 50), // Chiều rộng bằng chiều rộng của TextFormField
                   ),
+                  child: _isLoading
+                      ?  CircularProgressIndicator()
+                      : const Text('Đăng ký'),
                 ),
                 TextButton(
                   onPressed: () {

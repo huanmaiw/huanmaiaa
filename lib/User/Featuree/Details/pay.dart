@@ -70,7 +70,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Bạn chưa đăng nhập!")),
+        const SnackBar(content: Text("Chưa có giao dịch nào!")),
       );
       return;
     }
@@ -259,7 +259,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
                     Navigator.push(context, MaterialPageRoute(builder: (_)=>OrderSuccessScreen()));
                       if (widget.products.isNotEmpty) {
-                       // var product = widget.products.first;
+                        var product = widget.products.first;
                         _handlePayment();
                       }
                     },

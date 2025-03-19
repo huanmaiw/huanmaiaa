@@ -31,49 +31,51 @@ class ProductCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               color: kcontentColor,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 5),
-                Center(
-                  child: Hero(
-                    tag: product.image,
-                    child: Image.asset(
-                      product.image[0],
-                      width: 170,
-                      height: 170,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.only(left: 10),
-                  child: Center(
-                    child: Text(
-                      product.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 5),
+                  Center(
+                    child: Hero(
+                      tag: product.image,
+                      child: Image.asset(
+                        product.image[0],
+                        width: 170,
+                        height: 170,
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Text(
-                      NumberFormat.decimalPattern('vi_VN').format(product.price),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                        color: Colors.red,
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 10),
+                    child: Center(
+                      child: Text(
+                        product.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
-                  ],
-                )
-              ],
+                  ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Text(
+                        NumberFormat.decimalPattern('vi_VN').format(product.price),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
             ),
           ),
           Positioned(

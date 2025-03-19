@@ -1,18 +1,22 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../Provider/balence.dart';
 import '../Provider/top_up.dart';
+
 class Napcard extends StatefulWidget {
   const Napcard({Key? key}) : super(key: key);
   @override
   State<Napcard> createState() => _NapcardState();
 }
+
 class _NapcardState extends State<Napcard> {
   String? selectedValue;
   String? selectedValue1;
   List<String> items = ['Viettel', 'Vinaphone', 'Mobifone', 'Vietnamobile'];
-  List<String> itemss = ['10.000', '20.000', '50.000', '100.000', '200.000', '500.000'];
+  List<String> itemss = ['10000', '20000', '50000', '100000', '200000', '500000'];
   final _serialController = TextEditingController();
   final _codeController = TextEditingController();
 
@@ -23,60 +27,101 @@ class _NapcardState extends State<Napcard> {
     super.dispose();
   }
 
-  void _handleTopUp(BuildContext context) async {
+
+  Future<void> _handleTopUp(BuildContext context) async {
     final balanceProvider = Provider.of<BalanceProvider>(context, listen: false);
     final topUpHistoryProvider = Provider.of<TopUpHistoryProvider>(context, listen: false);
 
-    String selectedAmount = selectedValue1 ?? '';
-    double topUpAmount = double.tryParse(selectedAmount.replaceAll('.', '')) ?? 0;
+    if (selectedValue == null || selectedValue1 == null ||
+        _serialController.text.isEmpty || _codeController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin')),
+      );
+      return;
+    }
 
-    if (topUpAmount > 0) {
-      String userId = "user123";
+    String apiUrl = 'https://thesieure.com/api/napthe';
+    String apiKey = '08ae9b5e16006e6edf743470e44dc995';
 
-      // Lấy số dư hiện tại từ Firestore
-      DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(userId);
-      DocumentSnapshot userSnapshot = await userRef.get();
+    try {
+      var response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'telco': selectedValue,
+          'amount': selectedValue1,
+          'serial': _serialController.text,
+          'code': _codeController.text,
+          'api_key': apiKey,
+        }),
+      );
 
-      double currentBalance = userSnapshot.exists ? (userSnapshot['balance'] ?? 0).toDouble() : 0;
-      double newBalance = currentBalance + topUpAmount;
-      await userRef.set({'balance': newBalance}, SetOptions(merge: true));
-      balanceProvider.updateBalance(newBalance);
-      await FirebaseFirestore.instance.collection('top_up_history').add({
-        'userId': 'user123',
-        'amount': topUpAmount,
-        'telcoProvider': selectedValue,
-        'serial': _serialController.text,
-        'code': _codeController.text,
-        'status': 'Thành công',
-        'date': Timestamp.now(),
-      });
+      var data = jsonDecode(response.body);
 
-      // Cập nhật lịch sử trong ứng dụng
-      topUpHistoryProvider.addTransaction(
-        TopUpTransaction(
-          dateTime: DateTime.now(),
-          amount: topUpAmount,
-          cardType: selectedValue ?? '',
-          status: 'Thành công',
+      // Xử lý khi nạp thành công
+      if (data['status'] == 'success') {
+        double topUpAmount = double.parse(selectedValue1!);
+        String userId = "user123"; // Lấy ID người dùng thực tế
+
+        // Cập nhật số dư Firestore
+        DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(userId);
+        DocumentSnapshot userSnapshot = await userRef.get();
+        double currentBalance = userSnapshot.exists ? (userSnapshot['balance'] ?? 0).toDouble() : 0;
+        double newBalance = currentBalance + topUpAmount;
+        await userRef.set({'balance': newBalance}, SetOptions(merge: true));
+        balanceProvider.updateBalance(newBalance);
+
+        // Lưu lịch sử giao dịch
+        await FirebaseFirestore.instance.collection('top_up_history').add({
+          'userId': userId,
+          'amount': topUpAmount,
+          'telcoProvider': selectedValue,
+          'serial': _serialController.text,
+          'code': _codeController.text,
+          'status': 'Thành công',
+          'date': Timestamp.now(),
+        });
+
+        topUpHistoryProvider.addTransaction(
+          TopUpTransaction(
+            dateTime: DateTime.now(),
+            amount: topUpAmount,
+            cardType: selectedValue ?? '',
+            status: 'Thành công',
+          ),
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🎉 Nạp thẻ thành công! Số tiền đã được cộng vào tài khoản.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        // Xử lý khi nạp thất bại
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(' Lỗi: ${data['message']}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (error) {
+      // Xử lý lỗi kết nối hoặc lỗi khác
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng nhập đúng mã thẻ và seri!',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),),
+          backgroundColor: Colors.red,
         ),
-      );
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nạp tiền thành công')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng chọn mệnh giá thẻ')),
       );
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-      ),
+      appBar: AppBar(automaticallyImplyLeading: false),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -115,20 +160,25 @@ class _NapcardState extends State<Napcard> {
                 ),
                 TextFormField(
                   controller: _serialController,
-                  decoration:  InputDecoration(
-                      hintText: "Nhập serial thẻ",
+                  decoration: const InputDecoration(
+                    hintText: "Nhập serial thẻ",
                     border: OutlineInputBorder(),
                   ),
                 ),
-                SizedBox(height: 5,),
+                const SizedBox(height: 5),
                 TextFormField(
                   controller: _codeController,
-                  decoration:  InputDecoration(hintText: "Nhập mã thẻ",
-                  border: OutlineInputBorder(),
+                  decoration: const InputDecoration(
+                    hintText: "Nhập mã thẻ",
+                    border: OutlineInputBorder(),
                   ),
                 ),
-                SizedBox(height: 10,),
-                ElevatedButton(style: ElevatedButton.styleFrom(foregroundColor: Colors.white,backgroundColor: Colors.blue),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.blue,
+                  ),
                   onPressed: () => _handleTopUp(context),
                   child: const Text("Nạp thẻ"),
                 ),
