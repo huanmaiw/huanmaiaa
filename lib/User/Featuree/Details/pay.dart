@@ -198,17 +198,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   style: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 20),
-                // Hiển thị số dư hiện tại
-                Consumer<BalanceProvider>(
-                  builder: (context, balanceProvider, child) {
-                    return Text(
-                      'Số dư hiện tại: ${NumberFormat.currency(locale: 'vi_VN', symbol: 'VND', decimalDigits: 0).format(balanceProvider.balance)}',
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    );
-                  },
-                ),
+
                 const SizedBox(height: 20),
                 // Nhập mã giảm giá
                 TextFormField(
@@ -243,7 +233,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         color: Colors.green),
                   ),
                 const SizedBox(height: 10),
-                // Hiển thị tổng tiền sau khi giảm giá
                 Text(
                   'Tổng tiền cần thanh toán: ${NumberFormat.currency(locale: 'vi_VN', symbol: 'VND', decimalDigits: 0).format(_finalPrice)}',
                   style: const TextStyle(
@@ -253,20 +242,31 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ),
                 const SizedBox(height: 30),
                 // Nút thanh toán
-                Center(
-                  child: ElevatedButton(style: ElevatedButton.styleFrom(foregroundColor: Colors.white,backgroundColor: Colors.red),
-                    onPressed: () {
+                Consumer<BalanceProvider>(
+                  builder: (context, balanceProvider, child) {
+                    bool isBalanceEnough = balanceProvider.balance >= _finalPrice;
 
-                    Navigator.push(context, MaterialPageRoute(builder: (_)=>OrderSuccessScreen()));
-                      if (widget.products.isNotEmpty) {
-                        var product = widget.products.first;
-                        _handlePayment();
-                      }
-                    },
-
-                    child: const Text('Thanh toán'),
-                  ),
+                    return Center(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isBalanceEnough ? Colors.red : Colors.grey,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(double.infinity, 50),
+                        ),
+                        onPressed: isBalanceEnough
+                            ? () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => OrderSuccessScreen()));
+                          if (widget.products.isNotEmpty) {
+                            _handlePayment();
+                          }
+                        }
+                            : null, // Vô hiệu hóa nút nếu số dư không đủ
+                        child: Text(isBalanceEnough ? 'Thanh toán' : 'Số dư không đủ'),
+                      ),
+                    );
+                  },
                 ),
+
               ],
             ),
           ),
