@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'Feature/history_admin.dart';
+import 'Feature/home2_admin.dart';
 import 'Feature/home_admin.dart';
 import 'Feature/money_admin.dart';
 import 'Feature/profile_admin.dart';
@@ -47,7 +48,7 @@ class _AdminAppState extends State<AdminApp> {
         ],
       ),
       body: [
-        AdminMain(),
+        Home2Admin(),
         HistoryMain(),
         BankMain(),
         ProfileAdmin(),

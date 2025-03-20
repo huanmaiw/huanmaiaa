@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../../API/order2.dart';
 import '../Fuature_user/history_buy.dart';
 import '../Product/product_models.dart';
 import '../Provider/balence.dart';
@@ -255,7 +256,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ),
                         onPressed: isBalanceEnough
                             ? () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => OrderSuccessScreen()));
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => OrderSuccessScreen2()));
                           if (widget.products.isNotEmpty) {
                             _handlePayment();
                           }

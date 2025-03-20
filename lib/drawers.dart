@@ -22,6 +22,7 @@ class Drawers extends StatefulWidget {
 }
 
 class _DrawersState extends State<Drawers> {
+
   final String userId = FirebaseAuth.instance.currentUser?.uid ?? 'Mai';
   File? _avatarImage;
   final ImagePicker _picker = ImagePicker();

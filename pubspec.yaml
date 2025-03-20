@@ -57,7 +57,8 @@ flutter:
      - images/TuChon/5/
      - images/TuChon/6/
      - images/Pick/
-  #   - images/a_dot_ham.jpeg
+     - assets/account.json
+
 
 
   # fonts:

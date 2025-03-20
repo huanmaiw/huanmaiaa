@@ -31,7 +31,6 @@ class _TopUpHistoryScreenState extends State<TopUpHistoryScreen> {
             );
           }
 
-          // Hiển thị danh sách giao dịch
           return ListView.builder(
             itemCount: transactions.length,
             itemBuilder: (context, index) {

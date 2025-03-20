@@ -1,11 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
+import '../../Shared/readJson.dart';
 class AdminMain extends StatefulWidget {
   const AdminMain({super.key});
   @override
   State<AdminMain> createState() => _AdminMainState();
 }
 class _AdminMainState extends State<AdminMain> {
+  @override
+  void initState() {
+    loadJsonData();
+    super.initState();
+  }
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -26,6 +33,7 @@ class _AdminMainState extends State<AdminMain> {
       ),
       body: Column(
         children: [
+
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: accountsCollection.snapshots(),
