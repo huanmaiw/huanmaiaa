@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../Models/catelgory.dart';
 import '../Models/images_slider.dart';
 import '../Product/product.dart';
@@ -15,6 +14,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int currentSlider = 0;
   int selectedIndex = 0;
+  String searchQuery = "";
+
   @override
   Widget build(BuildContext context) {
     List<List<Product>> selectcategories = [
@@ -24,13 +25,45 @@ class _HomeScreenState extends State<HomeScreen> {
       random1,
       random2,
     ];
+
+    List<Product> displayedProducts = selectcategories[selectedIndex];
+
+    if (searchQuery.isNotEmpty) {
+      displayedProducts = displayedProducts
+          .where((product) => product.title.contains(searchQuery))
+          .toList();
+    }
+
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
         automaticallyImplyLeading: false,
-        title: Center(
-            child: const Text('Trang chủ',
-              style: TextStyle(fontWeight: FontWeight.bold),)),
+        title: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: "Tìm kiếm theo ID...",
+                  border: InputBorder.none,
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    searchQuery = value; // Cập nhật giá trị tìm kiếm
+                  });
+                },
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.search), // Icon tìm kiếm
+              onPressed: () {
+                // Xử lý sự kiện khi nhấn vào icon tìm kiếm (nếu cần)
+                print("Tìm kiếm: $searchQuery");
+              },
+            ),
+          ],
+        ),
       ),
+
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Padding(
@@ -38,27 +71,16 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-             // const MySearchBAR(),
               const SizedBox(height: 20),
               ImageSlider(),
               const SizedBox(height: 20),
               categoryItems(),
               const SizedBox(height: 20),
               if (selectedIndex == 0)
-                SingleChildScrollView(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Center(
-                        child: Text(
-                          "Tài khoản đang sale ",
-                          style: TextStyle(
-                            fontSize: 25,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ],
+                const Center(
+                  child: Text(
+                    "Tài khoản đang sale",
+                    style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800),
                   ),
                 ),
               const SizedBox(height: 10),
@@ -71,11 +93,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     childAspectRatio: 0.75,
                     crossAxisSpacing: 20,
                     mainAxisSpacing: 20),
-                itemCount: selectcategories[selectedIndex].length,
+                itemCount: displayedProducts.length,
                 itemBuilder: (context, index) {
-                  return ProductCard(
-                    product: selectcategories[selectedIndex][index],
-                  );
+                  return ProductCard(product: displayedProducts[index]);
                 },
               )
             ],
@@ -84,6 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
   SizedBox categoryItems() {
     return SizedBox(
       height: 130,
@@ -93,11 +114,12 @@ class _HomeScreenState extends State<HomeScreen> {
         physics: const BouncingScrollPhysics(),
         itemBuilder: (context, index) {
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal:3 ),
+            padding: const EdgeInsets.symmetric(horizontal: 3),
             child: GestureDetector(
               onTap: () {
                 setState(() {
                   selectedIndex = index;
+                  searchQuery = ""; // Xóa tìm kiếm khi chọn danh mục khác
                 });
               },
               child: Container(

@@ -23,20 +23,21 @@ class Drawers extends StatefulWidget {
 
 class _DrawersState extends State<Drawers> {
 
-  final String userId = FirebaseAuth.instance.currentUser?.uid ?? 'Mai';
+  String userId = "61560768990877"; // Định nghĩa userId là String
+
   File? _avatarImage;
   final ImagePicker _picker = ImagePicker();
 
   int currentIndex = 0;
-  List<Widget> screens = const [
-    HomeScreen(),
-    Favorite(),
-    Napcard(),
-    PurchaseHistoryScreen(),
-    TopUpHistoryScreen(),
-    Maihuan(),
-    Chinhsachbaomat(),
-    ChangePasswordScreen(),
+  List<Widget> screens = [
+     HomeScreen(),
+     Favorite(),
+     Napcard(),
+     PurchaseHistoryScreen(),
+     TopUpHistoryScreen(),
+     Maihuan(),
+     Chinhsachbaomat(),
+     ChangePasswordScreen(),
   ];
   Future<void> _pickImage(ImageSource source) async {
     final XFile? image = await _picker.pickImage(source: source);
@@ -57,6 +58,38 @@ class _DrawersState extends State<Drawers> {
     } catch (e) {
       print('Lỗi đăng xuất: $e');
     }
+  }
+
+  void _editUserId() {
+    TextEditingController controller = TextEditingController(text: userId);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Chỉnh sửa ID"),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(hintText: "Nhập ID mới"),
+          ),
+          actions: [
+            TextButton(
+              child: const Text("Hủy"),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text("Lưu"),
+              onPressed: () {
+                setState(() {
+                  userId = controller.text; // Cập nhật ID
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showLogoutConfirmationDialog(BuildContext context) {
@@ -167,10 +200,18 @@ class _DrawersState extends State<Drawers> {
                     builder: (context, balanceProvider, child) {
                       return Column(
                         children: [
-                          Text(
-                            'ID: $userId',
-                            style: const TextStyle(color: Colors.white, fontSize: 14,fontWeight: FontWeight.bold),
+                          GestureDetector(
+                            onTap: _editUserId, // Khi ấn vào ID, hộp thoại chỉnh sửa sẽ mở
+                            child: Text(
+                              'ID: $userId',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
+
                           SizedBox(height: 5,),
                           Text(
                             'Số tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: 'VND', decimalDigits: 0).format(balanceProvider.balance)}',

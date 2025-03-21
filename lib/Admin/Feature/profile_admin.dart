@@ -58,7 +58,7 @@ class _ProfileAdminState extends State<ProfileAdmin> {
             );
           },
           child: CircleAvatar(
-            radius: 70,
+            radius: 200,
             backgroundImage: _image != null
                 ? FileImage(_image!)
                 : AssetImage('images/category/cate1.png') as ImageProvider,

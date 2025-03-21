@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 class Maihuan extends StatelessWidget {
   const Maihuan({super.key});
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

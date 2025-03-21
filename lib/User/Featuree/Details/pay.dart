@@ -1,14 +1,15 @@
-
+import 'dart:convert';
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../API/order2.dart';
 import '../Fuature_user/history_buy.dart';
 import '../Product/product_models.dart';
 import '../Provider/balence.dart';
-import 'order.dart';
 class PaymentScreen extends StatefulWidget {
   final List<Product> products;
   final double totalPrice;
@@ -44,13 +45,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
     if (_formKey.currentState!.validate()) {
       String discountCode = _discountCodeController.text;
 
-      if (discountCode=="shopmeo" || discountCode=="SHOPMEO") {
+      if (discountCode=="shopmeo100%" || discountCode=="SHOPMEO100%") {
         setState(() {
-          _discountAmount = widget.totalPrice * 0.1;
-          _finalPrice = widget.totalPrice - _discountAmount;
+           _discountAmount = widget.totalPrice;
+           _finalPrice = 0;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đã áp dụng giảm giá 10%')),
+          const SnackBar(content: Text('Đã áp dụng giảm giá 100%')),
         );
       } else {
         setState(() {
@@ -71,7 +72,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Chưa có giao dịch nào!")),
+        const SnackBar(content: Text("Bạn cần đăng nhập để mua tài khoản!")),
       );
       return;
     }
@@ -81,77 +82,90 @@ class _PaymentScreenState extends State<PaymentScreen> {
     if (balanceProvider.balance >= _finalPrice) {
       balanceProvider.deductBalance(_finalPrice);
 
-      await FirebaseFirestore.instance.collection('users').doc(userId).update({
-        'balance': balanceProvider.balance,
-      });
+      DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(userId);
+      DocumentSnapshot userSnapshot = await userRef.get();
 
-      // Lấy danh sách tài khoản có sẵn theo phân loại (ví dụ: "Hot")
-      QuerySnapshot accountSnapshot = await FirebaseFirestore.instance
-          .collection('user')
-          .where('Phan loai', isEqualTo: 'Hot') // Lọc theo loại tài khoản
-          .limit(1)
-          .get();
+      if (userSnapshot.exists) {
+        await userRef.update({'balance': balanceProvider.balance});
+      } else {
 
-      if (accountSnapshot.docs.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Không còn tài khoản có sẵn!')),
-        );
         return;
       }
+      try {
+        var response = await http.get(Uri.parse('https://raw.githubusercontent.com/huanmaiw/my_json/refs/heads/main/account.json'));
 
-      var selectedAccount = accountSnapshot.docs.first;
+        if (response.statusCode == 200) {
+          List<dynamic> accounts = json.decode(response.body);
 
-      // Lưu vào lịch sử mua hàng của user
-      await FirebaseFirestore.instance.collection('users').doc(userId).collection('history').add({
-        'username': selectedAccount['Tai khoan'],
-        'password': selectedAccount['Mat khau'],
-        'note': selectedAccount['Ghi chu'],
-        'price': _finalPrice,
-        'purchaseDate': Timestamp.now(),
-      });
+          if (accounts.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Không còn tài khoản có sẵn!')),
+            );
+            return;
+          }
 
-      // Lưu vào lịch sử bán của admin
-      await FirebaseFirestore.instance.collection('admin').doc('history').collection('transactions').add({
-        'buyerId': userId,
-        'username': selectedAccount['Tai khoan'],
-        'password': selectedAccount['Mat khau'],
-        'note': selectedAccount['Ghi chu'],
-        'price': _finalPrice,
-        'saleDate': Timestamp.now(),
-      });
+          // Chọn một tài khoản ngẫu nhiên
+          var random = Random();
+          var selectedAccount = accounts[random.nextInt(accounts.length)];
 
-      // Xóa tài khoản khỏi Firestore sau khi bán
-      await FirebaseFirestore.instance.collection('user').doc(selectedAccount.id).delete();
+          // Lưu vào lịch sử mua hàng của user
+          await FirebaseFirestore.instance.collection('users').doc(userId).collection('history').add({
+            'username': selectedAccount['username'],
+            'password': selectedAccount['password'],
+            'note': selectedAccount['note'] ?? '',
+            'price': _finalPrice,
+            'purchaseDate': Timestamp.now(),
+          });
 
-      // Hiển thị hộp thoại chứa tài khoản và mật khẩu
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Thanh toán thành công!"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("Tài khoản: ${selectedAccount['Tai khoan']}"),
-                Text("Mật khẩu: ${selectedAccount['Mat khau']}"),
-                Text("Ghi chú: ${selectedAccount['Ghi chu']}"),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => PurchaseHistoryScreen()),
-                  );
-                },
-                child: Text("OK"),
-              ),
-            ],
+          // Lưu vào lịch sử bán của admin
+          await FirebaseFirestore.instance.collection('admin').doc('history').collection('transactions').add({
+            'buyerId': userId,
+            'username': selectedAccount['username'],
+            'password': selectedAccount['password'],
+            'note': selectedAccount['note'] ?? '',
+            'price': _finalPrice,
+            'saleDate': Timestamp.now(),
+          });
+
+          // Hiển thị hộp thoại chứa tài khoản và mật khẩu
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text("Thanh toán thành công!"),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text("Tài khoản: ${selectedAccount['username']}"),
+                    Text("Mật khẩu: ${selectedAccount['password']}"),
+                    Text("Ghi chú: ${selectedAccount['note'] ?? 'Không có'}"),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => PurchaseHistoryScreen()),
+                      );
+                    },
+                    child: Text("OK"),
+                  ),
+                ],
+              );
+            },
           );
-        },
-      );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Lỗi khi lấy dữ liệu tài khoản từ API!')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: ${e.toString()}')),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Số dư không đủ!')),

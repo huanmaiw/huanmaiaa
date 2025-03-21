@@ -32,75 +32,51 @@ class _Home2AdminState extends State<Home2Admin> {
     fetchAccounts();
   }
 
-  void addAccount() {
-    TextEditingController userController = TextEditingController();
-    TextEditingController passController = TextEditingController();
-    TextEditingController priceController = TextEditingController();
-    TextEditingController noteController = TextEditingController();
+  void showAccountDialog({int? index}) {
+    TextEditingController userController = TextEditingController(
+        text: index != null ? accounts[index]['user'] : '');
+    TextEditingController passController = TextEditingController(
+        text: index != null ? accounts[index]['pass'] : '');
+    TextEditingController priceController = TextEditingController(
+        text: index != null ? accounts[index]['price'].toString() : '');
+    TextEditingController noteController = TextEditingController(
+        text: index != null ? accounts[index]['note'] : '');
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Thêm tài khoản mới'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: Text(index == null ? 'Thêm tài khoản' : 'Chỉnh sửa tài khoản'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: userController, decoration: InputDecoration(labelText: 'User')),
-              TextField(controller: passController, decoration: InputDecoration(labelText: 'Mật khẩu')),
-              TextField(controller: noteController, decoration: InputDecoration(labelText: 'Ghi chú')),
-              TextField(controller: priceController, decoration: InputDecoration(labelText: 'Giá'), keyboardType: TextInputType.number),
+              _buildTextField(userController, 'User'),
+              _buildTextField(passController, 'Mật khẩu'),
+              _buildTextField(priceController, 'Giá', isNumber: true),
+              _buildTextField(noteController, 'Ghi chú'),
             ],
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context), child: Text('Hủy')),
-            TextButton(
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               onPressed: () {
                 setState(() {
-                  accounts.add({
-                    'id': (accounts.length + 1).toString(),
-                    'user': userController.text,
-                    'pass': passController.text,
-                    'note': noteController.text,
-                    'price': int.tryParse(priceController.text) ?? 0,
-                  });
-                });
-                Navigator.pop(context);
-              },
-              child: Text('Thêm'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void editAccount(int index) {
-    TextEditingController userController = TextEditingController(text: accounts[index]['user']);
-    TextEditingController passController = TextEditingController(text: accounts[index]['pass']);
-    TextEditingController priceController = TextEditingController(text: accounts[index]['price'].toString());
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Chỉnh sửa tài khoản'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: userController, decoration: InputDecoration(labelText: 'User')),
-              TextField(controller: passController, decoration: InputDecoration(labelText: 'Mật khẩu')),
-              TextField(controller: priceController, decoration: InputDecoration(labelText: 'Giá'), keyboardType: TextInputType.number),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: Text('Hủy')),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  accounts[index]['user'] = userController.text;
-                  accounts[index]['pass'] = passController.text;
-                  accounts[index]['price'] = int.tryParse(priceController.text) ?? 0;
+                  if (index == null) {
+                    accounts.add({
+                      'id': (accounts.length + 1).toString(),
+                      'user': userController.text,
+                      'pass': passController.text,
+                      'price': int.tryParse(priceController.text) ?? 0,
+                      'note': noteController.text,
+                    });
+                  } else {
+                    accounts[index]['user'] = userController.text;
+                    accounts[index]['pass'] = passController.text;
+                    accounts[index]['price'] = int.tryParse(priceController.text) ?? 0;
+                    accounts[index]['note'] = noteController.text;
+                  }
                 });
                 Navigator.pop(context);
               },
@@ -109,6 +85,20 @@ class _Home2AdminState extends State<Home2Admin> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label, {bool isNumber = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: TextField(
+        controller: controller,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      ),
     );
   }
 
@@ -124,43 +114,47 @@ class _Home2AdminState extends State<Home2Admin> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Danh sách tài khoản'),
-        actions: [
-          IconButton(icon: Icon(Icons.add), onPressed: addAccount),
-        ],
+        title: Text('Danh sách tài khoản', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.green,
+        automaticallyImplyLeading: false,
+        actions: [IconButton(icon: Icon(Icons.add,color: Colors.white,), onPressed: () => showAccountDialog())],
       ),
       body: accounts.isEmpty
           ? Center(child: CircularProgressIndicator())
           : ListView(
         children: categories.map((category) {
           List<dynamic> filteredAccounts = accounts.where((account) => account['note'] == category).toList();
-          return ExpansionTile(
-            title: Text(category, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            children: filteredAccounts.map((account) {
-              int index = accounts.indexOf(account);
-              return Card(
-                margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                child: ListTile(
-                  leading: CircleAvatar(child: Text(account['id'][0])),
-                  title: Text('User: ${account['user']}'),
+          return Card(
+            margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 3,
+            child: ExpansionTile(
+              title: Text(category, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              children: filteredAccounts.map((account) {
+                int index = accounts.indexOf(account);
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.green,
+                    child: Text(account['id'][0], style: TextStyle(color: Colors.white)),
+                  ),
+                  title: Text('User: ${account['user']}', style: TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Mật khẩu: ${account['pass']}'),
-                      Text('Ghi chú: ${account['note']}'),
                       Text('Giá: ${account['price']} VND'),
                     ],
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(icon: Icon(Icons.edit, color: Colors.blue), onPressed: () => editAccount(index)),
+                      IconButton(icon: Icon(Icons.edit, color: Colors.blue), onPressed: () => showAccountDialog(index: index)),
                       IconButton(icon: Icon(Icons.delete, color: Colors.red), onPressed: () => deleteAccount(index)),
                     ],
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+            ),
           );
         }).toList(),
       ),

@@ -1,66 +1,67 @@
-
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PurchaseHistoryScreen extends StatefulWidget {
-  const PurchaseHistoryScreen({Key? key}) : super(key: key);
-
   @override
   _PurchaseHistoryScreenState createState() => _PurchaseHistoryScreenState();
 }
 
 class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
-  User? user = FirebaseAuth.instance.currentUser;
+  List<Map<String, dynamic>> purchaseHistory = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadHistory();
+  }
+
+  Future<void> loadHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> history = prefs.getStringList('purchase_history') ?? [];
+
+    setState(() {
+      purchaseHistory = history
+          .map((item) => json.decode(item) as Map<String, dynamic>)
+          .toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (user == null) {
-      return Scaffold(
-        appBar: AppBar(title: Text('Lịch sử mua tài khoản game')),
-        body: Center(child: Text("Chưa có giao dịch nào!")),
-      );
-    }
-
     return Scaffold(
-        appBar: AppBar(title: Text('Lịch sử mua tài khoản game')),
-        body: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('user')
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              return Center(child: Text('Lỗi: ${snapshot.error}'));
-            }
-            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              return Center(child: Text('Chưa có giao dịch nào'));
-            }
-
-            return ListView(
-              children: snapshot.data!.docs.map((DocumentSnapshot document) {
-                var data = document.data() as Map<String, dynamic>;
-
-                return Card(
-                  margin: EdgeInsets.all(8.0),
-                  child: ListTile(
-                    title: Text("Tài khoản: ${data['Tai khoan'] ?? 'Không có'}",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Mật khẩu: ${data['Mat khau'] ?? 'Không có'}"),
-
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-            );
-          },
-        )
+      appBar: AppBar(title: const Text('Lịch sử mua hàng')),
+      body: purchaseHistory.isEmpty
+          ? const Center(child: Text('Chưa có lịch sử mua hàng'))
+          : ListView.builder(
+        itemCount: purchaseHistory.length,
+        itemBuilder: (context, index) {
+          final account = purchaseHistory[index];
+          return Card(
+            margin: const EdgeInsets.all(8),
+            child: ListTile(
+              title: Text('ID: ${account['id']}'),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('👤 User: ${account['user']}'),
+                  Text('🔑 Pass: ${account['pass']}'),
+                ],
+              ),
+              trailing: IconButton(
+                icon: Icon(Icons.copy),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: account['user']));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Đã sao chép tài khoản')),
+                  );
+                },
+              ),
+            ),
+          );
+        },
+      ),
     );
-  }  }
+  }
+}
