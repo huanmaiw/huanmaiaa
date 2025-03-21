@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:maishop/API/acc_provider.dart';
+import 'package:maishop/slap_screen.dart';
 import 'package:provider/provider.dart';
+import 'Firebase/auth_service.dart';
 import 'User/Accountz/login_user.dart';
 import 'User/Featuree/Cart/cart_provider.dart';
 import 'User/Featuree/Favorite/favorite_pro.dart';
 import 'User/Featuree/Provider/balence.dart';
 import 'User/Featuree/Provider/top_up.dart';
+import 'drawers.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -33,14 +36,8 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home:
-      LoginScreen(),
+      SplashScreen(),
     );
   }
-// Widget _getHomeScreen() {
-//   if (AuthService().currentUser != null) {
-//     return Drawers();
-//   } else {
-//     return LoginScreen();
-//   }
-// }
+
 }

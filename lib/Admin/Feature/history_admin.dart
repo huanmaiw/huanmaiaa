@@ -33,9 +33,9 @@ class _HistoryMainState extends State<HistoryMain> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Lịch sử mua hàng'),automaticallyImplyLeading: false,),
+      appBar: AppBar(title: const Text('Lịch sử bán'),automaticallyImplyLeading: false,),
       body: purchaseHistory.isEmpty
-          ? const Center(child: Text('Chưa có lịch sử mua hàng'))
+          ? const Center(child: Text('Chưa có lịch sử bán'))
           : ListView.builder(
         itemCount: purchaseHistory.length,
         itemBuilder: (context, index) {
@@ -49,6 +49,9 @@ class _HistoryMainState extends State<HistoryMain> {
                 children: [
                   Text('👤 User: ${account['user']}'),
                   Text('🔑 Pass: ${account['pass']}'),
+                  Text('📅 Ngày: ${account['date']}'),
+                  Text('💰 Giá: ${account['price']}'),
+                  Text('📦 Ghi chú: ${account['note']}'),
                 ],
               ),
               trailing: IconButton(

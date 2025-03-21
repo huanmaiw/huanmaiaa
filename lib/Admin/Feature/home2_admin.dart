@@ -51,7 +51,7 @@ class _Home2AdminState extends State<Home2Admin> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildTextField(userController, 'User'),
+              _buildTextField(userController, 'Tài khoản'),
               _buildTextField(passController, 'Mật khẩu'),
               _buildTextField(priceController, 'Giá', isNumber: true),
               _buildTextField(noteController, 'Ghi chú'),
@@ -80,7 +80,7 @@ class _Home2AdminState extends State<Home2Admin> {
                 });
                 Navigator.pop(context);
               },
-              child: Text('Lưu'),
+              child: Text('Lưu',style: TextStyle(color: Colors.white),),
             ),
           ],
         );
@@ -135,9 +135,10 @@ class _Home2AdminState extends State<Home2Admin> {
                 return ListTile(
                   leading: CircleAvatar(
                     backgroundColor: Colors.green,
-                    child: Text(account['id'][0], style: TextStyle(color: Colors.white)),
+                    child: Image.asset("images/category/cate2.png"),
+                    //Text(account['id'][0], style: TextStyle(color: Colors.white)),
                   ),
-                  title: Text('User: ${account['user']}', style: TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text('Tài khoản: ${account['user']}', style: TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

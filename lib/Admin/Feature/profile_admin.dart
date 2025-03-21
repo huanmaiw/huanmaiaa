@@ -12,7 +12,7 @@ class ProfileAdmin extends StatefulWidget {
 }
 class _ProfileAdminState extends State<ProfileAdmin> {
   String _name = 'Admin Mai Huan';
-  String _email = '482677';
+  String _email = '4826';
   File? _image;
   bool isLoading = false;
   final ImagePicker _picker = ImagePicker();

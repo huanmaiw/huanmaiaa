@@ -31,7 +31,7 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Lịch sử mua hàng')),
+      appBar: AppBar(title: const Text('Lịch sử mua hàng'),automaticallyImplyLeading: false,),
       body: purchaseHistory.isEmpty
           ? const Center(child: Text('Chưa có lịch sử mua hàng'))
           : ListView.builder(
