@@ -1,16 +1,12 @@
-# maishop
-
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+ứng dụng bán tài khoản game với 2 vai trò đăng nhập với Firebase Auth
+1. với người dùng
+   -mua hàng
+    -nạp tiền với thẻ cào, chuyển khoản
+   -xem sản phẩm
+   -xem lịch sử nạp, lịch sử mua
+   -chỉnh sửa thông tin, ảnh đại diện, ID, mật khẩu
+2. với Admin
+   - cập nhật, sửa, xóa, thêm tài khoản
+   - xem lịch sử bán, lịch sử nạp
+   - báo cáo doanh thu
+   - chỉnh sửa thông tin ảnh đại diện, ID, mật khẩu
